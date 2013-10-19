@@ -44,6 +44,19 @@ You can also add items to an existing explorer:
 	(send e add-item! 'second-item)
 	(send e add-item! 'third-item)
 
+## Known problems and bugs
+
+ - There is no copy and paste from the hierarchical list widget.
+   (Workaround: select the item, type `this` into the REPL, hit enter,
+   copy and paste from there.)
+
+ - Large items are eagerly turned into widgetry. This process should
+   be lazy, only done on demand once the user starts exploring a
+   particular branch of the tree.
+
+ - Cycles are not detected or handled. (If we had lazy unfolding this
+   would not be a problem.)
+
 ## License (MIT)
 
 Copyright (c) 2013 Tony Garnock-Jones <tonygarnockjones@gmail.com>

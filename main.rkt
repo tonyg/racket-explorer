@@ -22,11 +22,6 @@
 ;; THE SOFTWARE.
 
 
-;; TODO
-;; - copy and paste
-;; - lazy creation of subitems
-;; - cycle detection (if we had lazy unfolding this would not be a problem)
-
 (require racket/generic)
 (require racket/port)
 (require mrlib/hierlist)
