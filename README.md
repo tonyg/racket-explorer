@@ -27,7 +27,7 @@ intended as an alternative to `pretty-print` and friends.
 
 ## Installation
 
-    raco pkg install --link -n explorer $(pwd)
+    raco pkg install explorer
 
 ## Use
 
