@@ -15,6 +15,8 @@ intended as an alternative to `pretty-print` and friends.
 	- object fields
 	- non-opaque structs
 	- procedures
+	- syntax objects
+	- paths
 	- user-defined extensions
  - Interactive
     - bottom panel in explorer widget is an interactive REPL

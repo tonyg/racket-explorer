@@ -99,12 +99,44 @@
 	       `((optional-keywords . ,optional-kws)))
 	 )))
 
+    (define/public (syntax->explorer-items stx)
+      (append (let ((loc-info (filter cdr
+				      (map (match-lambda
+					    [(list label extractor) (cons label (extractor stx))])
+					   `((source ,syntax-source)
+					     (line ,syntax-line)
+					     (column ,syntax-column)
+					     (position ,syntax-position)
+					     (span ,syntax-span)
+					     (source-module ,syntax-source-module))))))
+		(if (null? loc-info)
+		    '()
+		    (list (explorer-item "- location"
+					 (hash-items->explorer-items loc-info)
+					 stx))))
+	      (let ((keys (syntax-property-symbol-keys stx)))
+		(if (null? keys)
+		    '()
+		    (list (explorer-item "- properties"
+					 (hash-items->explorer-items
+					  (map (lambda (k) (cons k (syntax-property stx k))) keys))
+					 stx))))
+	      (syntax-e stx)))
+
+    (define/public (path->explorer-items p)
+      (map (lambda (portion) (if (path-for-some-system? portion)
+				 (path->string portion)
+				 portion))
+	   (explode-path p)))
+
     (define/public (item-label x)
-      (with-output-to-string (lambda ()
-			       ;; (when (object-name x)
-			       ;;   (display (object-name x))
-			       ;;   (display ": "))
-			       (write x))))
+      (if (syntax? x)
+	  (string-append "#<syntax " (item-label (syntax->datum x)) ">")
+	  (with-output-to-string (lambda ()
+				   ;; (when (object-name x)
+				   ;;   (display (object-name x))
+				   ;;   (display ": "))
+				   (write x)))))
 
     (define/public (add-explorer-item! parent label children value)
       (if (null? children)
@@ -127,6 +159,7 @@
 					  x))
 			 (list "#b" "#o" "" "#x")
 			 (list 2 8 10 16)))]
+	[(? string?) (container (hash-items->explorer-items `((length . ,(string-length x)))))]
 	[(? cons?) (container x)]
 	[(? hash?) (container (hash-items->explorer-items (hash->list x)))]
 	[(? set?) (container (set->list x))]
@@ -134,6 +167,8 @@
 	[(? object?) (container (hash-items->explorer-items (hash->list (object->hash x))))]
 	[(? struct?) (container (vector->list (struct->vector x '#:opaque)))]
 	[(? procedure?) (container (procedure-explorer-items x))]
+	[(? syntax?) (container (syntax->explorer-items x))]
+	[(? path-for-some-system?) (container (path->explorer-items x))]
 	[(? explorable?) (add-item!* (->explorer-item x) parent)]
 	[_ (container '())])
       (void))

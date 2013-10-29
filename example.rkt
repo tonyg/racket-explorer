@@ -22,11 +22,18 @@
 	(hash "hello" 1
 	      "world" 2))
 
+  ;; (send e add-item!
+  ;; 	(with-input-from-file "main.rkt"
+  ;; 	  (lambda ()
+  ;; 	    (read-line)
+  ;; 	    (port->list))))
+
   (send e add-item!
-	(with-input-from-file "main.rkt"
+	(with-input-from-file "example.rkt"
 	  (lambda ()
-	    (read-line)
-	    (port->list))))
+	    (parameterize ((read-accept-reader #t)
+			   (read-accept-lang #t))
+	      (read-syntax)))))
 
   (struct x ()
 	  #:methods gen:explorable
