@@ -31,7 +31,8 @@
 	 gen:explorable
 	 ->explorer-item
 	 explorer%
-	 explore)
+	 explore
+	 explore/refresh)
 
 (struct explorer-item (label children value) #:prefab)
 
@@ -52,9 +53,17 @@
     (define/override (on-select i)
       (send explorer select-value! (if i (send i user-data) (void))))))
 
+(module interaction-anchor racket
+  (require racket/class racket/gui/base)
+  (provide anchor)
+  (define-namespace-anchor anchor))
+
+(require 'interaction-anchor)
+
 (define (make-comfortable-namespace)
-  (define n (make-gui-namespace))
-  (eval '(require racket) n)
+  ;; (define n (namespace-anchor->empty-namespace anchor))
+  ;; (eval '(require racket racket/class racket/gui/base) n)
+  (define n (namespace-anchor->namespace anchor))
   n)
 
 (define explorer%
@@ -64,6 +73,9 @@
     (field [namespace (make-comfortable-namespace)])
     (field [interaction-panel (new workspace% [parent parent] [namespace namespace])])
     (super-new)
+
+    (define/public (erase)
+      (for [(item (send hierlist get-items))] (send hierlist delete-item item)))
 
     (define/public (object->hash o)
       (for/hash ((k (in-list (field-names o))))
@@ -201,3 +213,21 @@
   (send e add-item! v)
   (send f show #t)
   e)
+
+(define (explore/refresh thunk)
+  (define f (new frame%
+		 [label "Racket Explorer"]
+		 [width 300]
+		 [height 700]))
+  (define b (new button%
+		 [label "Refresh"]
+		 [parent f]
+		 [callback (lambda (b evt) (refresh))]))
+  (define e (new explorer%
+		 [parent f]))
+  (define (refresh)
+    (send e erase)
+    (send e add-item! (thunk)))
+  (refresh)
+  (send f show #t)
+  refresh)
