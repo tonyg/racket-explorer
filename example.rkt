@@ -22,6 +22,11 @@
 	(hash "hello" 1
 	      "world" 2))
 
+  (send e add-item!
+        (let ((h (make-hash)))
+          (hash-set! h "mutable" "hash")
+          h))
+
   ;; (send e add-item!
   ;; 	(with-input-from-file "main.rkt"
   ;; 	  (lambda ()
