@@ -68,17 +68,17 @@
 	(lambda (proc)
 	  (parameterize ((current-eventspace repl-eventspace))
 	    (queue-callback proc #f)))))
-    
+
     (field [user-custodian (make-custodian)])
-    
+
     (field [user-output-port
 	    (let ([leftover #""]
 		  [cvt (bytes-open-converter "UTF-8-permissive" "UTF-8")])
 	      (make-output-port
 	       'console
 	       always-evt
-	       (lambda (s start end flush? breakable?) 
-		 (queue-output (lambda () 
+	       (lambda (s start end flush? breakable?)
+		 (queue-output (lambda ()
 				 ;; s might end in the middle of a UTF-8 encoding.
 				 ;;  Get a complete prefix, and save the rest.
 				 (let ([s (bytes-append leftover (subbytes s start end))])
@@ -87,7 +87,7 @@
 				     (set! leftover (subbytes s used))))))
 		 (- end start))
 	       void))])			; no close action
-    
+
     (init-field [user-eventspace
 		 (parameterize ((current-custodian user-custodian))
 		   (make-eventspace))])
@@ -98,7 +98,7 @@
 	 (lambda ()
 	   (dynamic-wind
 	     void
-	     (lambda () 
+	     (lambda ()
 	       (call-with-values
 		   (lambda () (call-with-continuation-prompt
 			       (lambda ()
@@ -107,11 +107,11 @@
 						(current-input-port (open-input-bytes #"")))
 				   (eval (cons '#%top-interaction expr) namespace)))))
 		 (lambda results
-		   (for-each 
-		    (lambda (v) 
+		   (for-each
+		    (lambda (v)
 		      (when (not (void? v))
 			(parameterize ([current-output-port user-output-port])
-			  (print v) 
+			  (print v)
 			  (newline))))
 		    results))))
 	     (lambda ()
