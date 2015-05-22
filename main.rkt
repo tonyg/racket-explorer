@@ -34,17 +34,27 @@
 	 explore
 	 explore/refresh)
 
+;; An ExplorerItem is an
+;;   (explorer-item (U (-> String) String)
+;;                  (U (-> (Listof Any)) (Listof Any))
+;;                  Any)
+;; where label and children, if procedures, must be nullary procedures
+;; yielding the *actual* label and children at the time of the call.
 (struct explorer-item (label children value) #:prefab)
 
 (define-generics explorable
   (->explorer-item explorable))
 
-(define (fill-hierlist-item! hierlist-item label value children-producer)
+(define (refresh-hierlist-item-label! hierlist-item ei)
+  (define l (explorer-item-label ei))
   (define e (send hierlist-item get-editor))
   (send e erase)
-  (send e insert label)
-  (send hierlist-item user-data (cons value children-producer))
+  (send e insert (if (procedure? l) (l) l))
   hierlist-item)
+
+(define (fill-hierlist-item! hierlist-item ei)
+  (send hierlist-item user-data ei)
+  (refresh-hierlist-item-label! hierlist-item ei))
 
 (define explorer-hierlist%
   (class hierarchical-list%
@@ -52,12 +62,20 @@
     (super-new)
     (define/override (on-item-opened i)
       ;; (Re)compute children on-demand
-      ((cdr (send i user-data)) i))
+      (define ei (send i user-data))
+      (define kids (explorer-item-children ei))
+      (send explorer add-list-like!* (if (procedure? kids) (kids) kids) i))
     (define/override (on-item-closed i)
       ;; Remove children - they'll be readded when next i is opened.
       (for [(item (send i get-items))] (send i delete-item item)))
     (define/override (on-select i)
-      (send explorer select-value! (if i (car (send i user-data)) (void))))))
+      (cond
+        [i
+         (define ei (send i user-data))
+         (refresh-hierlist-item-label! i ei)
+         (send explorer select-value! (explorer-item-value ei))]
+        [else
+         (send explorer select-value! (void))]))))
 
 (module interaction-anchor racket
   (require racket/class racket/gui/base)
@@ -156,27 +174,20 @@
 				   ;;   (display ": "))
 				   (write x)))))
 
-    (define/public (add-explorer-item! parent label children value)
-      (fill-hierlist-item! (if (null? children)
-                               (send parent new-item)
-                               (send parent new-list))
-                           label
-                           value
-                           (lambda (i)
-                             (add-list-like!* (if (procedure? children)
-                                                  (children)
-                                                  children)
-                                              i))))
+    (define/public (add-explorer-item! parent ei)
+      (fill-hierlist-item! (send parent new-list) ei))
 
     (define/public (add-item! x)
       (add-item!* x hierlist))
 
     (define/public (add-item!* x parent)
       (define-syntax-rule (container children)
-        (add-explorer-item! parent (item-label x) (lambda () children) x))
+        (add-explorer-item! parent
+                            (explorer-item (lambda () (item-label x))
+                                           (lambda () children)
+                                           x)))
       (match x
-	[(explorer-item label children value)
-	 (add-explorer-item! parent label children value)]
+	[(? explorer-item? ei) (add-explorer-item! parent ei)]
 	[(? exact-integer?)
 	 (container (map (lambda (p b)
 			   (explorer-item (string-append p (number->string x b))
