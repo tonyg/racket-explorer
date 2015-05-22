@@ -73,9 +73,9 @@
         [i
          (define ei (send i user-data))
          (refresh-hierlist-item-label! i ei)
-         (send explorer select-value! (explorer-item-value ei))]
+         (send explorer select-value! #:define? #t (explorer-item-value ei))]
         [else
-         (send explorer select-value! (void))]))))
+         (send explorer select-value! #:define? #f (void))]))))
 
 (module interaction-anchor racket
   (require racket/class racket/gui/base)
@@ -205,6 +205,8 @@
 	[(? procedure?) (container (procedure-explorer-items x))]
 	[(? syntax?) (container (syntax->explorer-items x))]
 	[(? path-for-some-system?) (container (path->explorer-items x))]
+        [(? box?) (container (unbox x))]
+        [(? promise?) (container (force x))]
 	[(? explorable?) (add-item!* (->explorer-item x) parent)]
 	[_ (container '())])
       (void))
@@ -218,10 +220,10 @@
 	[other
 	 (add-item!* other parent)]))
 
-    (define/public (select-value! v)
-      (if (void? v)
-	  (namespace-undefine-variable! 'this namespace)
-	  (namespace-set-variable-value! 'this v #t namespace))
+    (define/public (select-value! #:define? [define? #t] v)
+      (if define?
+	  (namespace-set-variable-value! 'this v #t namespace)
+	  (namespace-undefine-variable! 'this namespace))
       (send interaction-panel focus))
 
     ))

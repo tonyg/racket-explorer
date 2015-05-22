@@ -6,6 +6,18 @@
   (define e (explore (explorer-item "Hello, world" '(1 2 3) 'foo)))
 
   (send e add-item!
+        (letrec ((counter 0)
+                 (ei (explorer-item (lambda ()
+                                      (set! counter (+ counter 1))
+                                      (format "magic mutable thing ~a" counter))
+                                    (lambda () (list 'a ei 'z))
+                                    (void))))
+          ei))
+
+  (send e add-item! (delay (begin (log-info "promise forced")
+                                  (+ 2 3))))
+
+  (send e add-item!
 	(set "hello" 1 2 3.45 (lambda (x) x)))
 
   (send e add-item!
@@ -26,6 +38,8 @@
         (let ((h (make-hash)))
           (hash-set! h "mutable" "hash")
           h))
+
+  (send e add-item! (box 'this-is-a-box))
 
   ;; (send e add-item!
   ;; 	(with-input-from-file "main.rkt"
