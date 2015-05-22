@@ -39,19 +39,25 @@
 (define-generics explorable
   (->explorer-item explorable))
 
-(define (fill-hierlist-item! hierlist-item label value)
+(define (fill-hierlist-item! hierlist-item label value children-producer)
   (define e (send hierlist-item get-editor))
   (send e erase)
   (send e insert label)
-  (send hierlist-item user-data value)
+  (send hierlist-item user-data (cons value children-producer))
   hierlist-item)
 
 (define explorer-hierlist%
   (class hierarchical-list%
     (init-field explorer)
     (super-new)
+    (define/override (on-item-opened i)
+      ;; (Re)compute children on-demand
+      ((cdr (send i user-data)) i))
+    (define/override (on-item-closed i)
+      ;; Remove children - they'll be readded when next i is opened.
+      (for [(item (send i get-items))] (send i delete-item item)))
     (define/override (on-select i)
-      (send explorer select-value! (if i (send i user-data) (void))))))
+      (send explorer select-value! (if i (car (send i user-data)) (void))))))
 
 (module interaction-anchor racket
   (require racket/class racket/gui/base)
@@ -151,16 +157,23 @@
 				   (write x)))))
 
     (define/public (add-explorer-item! parent label children value)
-      (if (null? children)
-	  (fill-hierlist-item! (send parent new-item) label value)
-	  (add-list-like!* children (fill-hierlist-item! (send parent new-list) label value))))
+      (fill-hierlist-item! (if (null? children)
+                               (send parent new-item)
+                               (send parent new-list))
+                           label
+                           value
+                           (lambda (i)
+                             (add-list-like!* (if (procedure? children)
+                                                  (children)
+                                                  children)
+                                              i))))
 
     (define/public (add-item! x)
       (add-item!* x hierlist))
 
     (define/public (add-item!* x parent)
-      (define (container children)
-	(add-explorer-item! parent (item-label x) children x))
+      (define-syntax-rule (container children)
+        (add-explorer-item! parent (item-label x) (lambda () children) x))
       (match x
 	[(explorer-item label children value)
 	 (add-explorer-item! parent label children value)]
