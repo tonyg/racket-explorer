@@ -3,7 +3,7 @@
 ;; Extracted and generalized from mred/private/repl.rkt.
 
 ;; Copyright (c) 2010-2013 PLT Design Inc.
-;; Modifications copyright (c) 2013 Tony Garnock-Jones
+;; Modifications copyright (c) 2013, 2015 Tony Garnock-Jones
 ;;
 ;; This module is distributed under the GNU Lesser General Public
 ;; License (LGPL).  This means that you can link it into proprietary
