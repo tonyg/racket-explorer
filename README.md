@@ -9,25 +9,25 @@ intended as an alternative to `pretty-print` and friends.
 
  - Supports:
     - integers (displays in binary, octal, decimal and hex)
-	- other atoms
-	- pairs, vectors and lists
-	- hash-tables and sets
-	- object fields
-	- non-opaque structs
-	- procedures
-	- syntax objects
-	- paths
+    - other atoms
+    - pairs, vectors and lists
+    - hash-tables and sets
+    - object fields
+    - non-opaque structs
+    - procedures
+    - syntax objects
+    - paths
     - boxes
     - promises (forces the promise when you click on the arrow)
     - user-defined extensions
  - Interactive
     - bottom panel in explorer widget is an interactive REPL
-	- currently-selected explorer item is bound to `this` global in REPL
+    - currently-selected explorer item is bound to `this` global in REPL
  - Extensible
     - implement the `explorable` generic, returning an `explorer-item` from `->explorer-item`
-	- override methods in subclasses of `explorer%` to customize built-in support
-	   - `hash-item->explorer-item` for key/value pairs
-	   - `procedure-explorer-items` for information on procedures
+    - override methods in subclasses of `explorer%` to customize built-in support
+       - `hash-item->explorer-item` for key/value pairs
+       - `procedure-explorer-items` for information on procedures
 
 ## Installation
 
@@ -36,17 +36,17 @@ intended as an alternative to `pretty-print` and friends.
 ## Use
 
     #lang racket/base
-	(require explorer)
-	(explore `(some complicated #(data structure)))
+    (require explorer)
+    (explore `(some complicated #(data structure)))
 
 You can also add items to an existing explorer:
 
     #lang racket/base
-	(require explorer)
-	(require racket/class)
-	(define e (explore `(some complicated #(data structure))))
-	(send e add-item! 'second-item)
-	(send e add-item! 'third-item)
+    (require explorer)
+    (require racket/class)
+    (define e (explore `(some complicated #(data structure))))
+    (send e add-item! 'second-item)
+    (send e add-item! 'third-item)
 
 ## Known problems and bugs
 
