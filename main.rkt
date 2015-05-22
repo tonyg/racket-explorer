@@ -192,7 +192,6 @@
 	 (add-item!* h parent)
 	 (add-list-like!* t parent)]
 	[other
-	 ;; (add-explorer-item! parent "." '() (void))
 	 (add-item!* other parent)]))
 
     (define/public (select-value! v)
