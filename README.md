@@ -3,7 +3,8 @@
 A utility for interactive exploration of complex data structures,
 intended as an alternative to `pretty-print` and friends.
 
-    $ racket example.rkt
+    $ raco pkg install explorer
+    $ racket -l explorer/example
 
 ![Example](doc/example.png)
 
