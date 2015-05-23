@@ -19,6 +19,7 @@ intended as an alternative to `pretty-print` and friends.
     - paths
     - boxes
     - promises (forces the promise when you click on the arrow)
+    - exceptions
     - user-defined extensions
  - Interactive
     - bottom panel in explorer widget is an interactive REPL

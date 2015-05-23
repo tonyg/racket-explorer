@@ -64,7 +64,12 @@
       ;; (Re)compute children on-demand
       (define ei (send i user-data))
       (define kids (explorer-item-children ei))
-      (send explorer add-list-like!* (if (procedure? kids) (kids) kids) i))
+      (send explorer add-list-like!*
+            (if (procedure? kids)
+                (with-handlers [(exn? (lambda (e) (list e)))]
+                  (kids))
+                kids)
+            i))
     (define/override (on-item-closed i)
       ;; Remove children - they'll be readded when next i is opened.
       (for [(item (send i get-items))] (send i delete-item item)))
@@ -160,10 +165,42 @@
 	      (syntax-e stx)))
 
     (define/public (path->explorer-items p)
-      (map (lambda (portion) (if (path-for-some-system? portion)
-				 (path->string portion)
-				 portion))
-	   (explode-path p)))
+      (append (list (explorer-item "- path components"
+                                   (reverse
+                                    (foldl (lambda (piece acc)
+                                             (if (null? acc)
+                                                 (list piece)
+                                                 (cons (build-path (car acc) piece) acc)))
+                                           '()
+                                           (explode-path (normalize-path (path->complete-path p)))))
+                                   (explode-path p)))
+              (cond
+                [(file-exists? p)
+                 (define s (file-size p))
+                 (list (explorer-item (format "- length: ~a bytes" s) '() s)
+                       (explorer-item "- as bytes"
+                                      (lambda () (list (file->bytes p)))
+                                      (void))
+                       (explorer-item "- as a string"
+                                      (lambda () (list (file->string p)))
+                                      (void)))]
+                [(directory-exists? p)
+                 (define ps (directory-list p))
+                 (cons (explorer-item (format "- count: ~a" (length ps))
+                                      '()
+                                      (length ps))
+                       (map (lambda (sub-p) (build-path p sub-p)) ps))]
+                [else
+                 (list (explorer-item "- file or directory does not exist" '() (void)))])))
+
+    (define/public (exn->explorer-items e)
+      (define message (exn-message e))
+      (define context (continuation-mark-set->context (exn-continuation-marks e)))
+      (define formatted (parameterize ([current-error-port (open-output-string)])
+                          ((error-display-handler) message e)
+                          (get-output-string (current-error-port))))
+      (list (explorer-item formatted '() formatted)
+            (explorer-item "continuation-mark context" context context)))
 
     (define/public (item-label x)
       (if (syntax? x)
@@ -175,7 +212,10 @@
 				   (write x)))))
 
     (define/public (add-explorer-item! parent ei)
-      (fill-hierlist-item! (send parent new-list) ei))
+      (fill-hierlist-item! (if (null? (explorer-item-children ei))
+                               (send parent new-item)
+                               (send parent new-list))
+                           ei))
 
     (define/public (add-item! x)
       (add-item!* x hierlist))
@@ -185,6 +225,11 @@
         (add-explorer-item! parent
                             (explorer-item (lambda () (item-label x))
                                            (lambda () children)
+                                           x)))
+      (define-syntax-rule (container/nodelay children)
+        (add-explorer-item! parent
+                            (explorer-item (lambda () (item-label x))
+                                           children
                                            x)))
       (match x
 	[(? explorer-item? ei) (add-explorer-item! parent ei)]
@@ -196,11 +241,13 @@
 			 (list "#b" "#o" "" "#x")
 			 (list 2 8 10 16)))]
 	[(? string?) (container (hash-items->explorer-items `((length . ,(string-length x)))))]
+	[(? bytes?) (container (hash-items->explorer-items `((bytes . ,(string-length x)))))]
 	[(? cons?) (container x)]
 	[(? hash?) (container (hash-items->explorer-items (hash->list x)))]
 	[(? set?) (container (set->list x))]
 	[(? vector?) (container (vector->list x))]
 	[(? object?) (container (hash-items->explorer-items (hash->list (object->hash x))))]
+        [(? exn?) (container (exn->explorer-items x))]
 	[(? struct?) (container (vector->list (struct->vector x '#:opaque)))]
 	[(? procedure?) (container (procedure-explorer-items x))]
 	[(? syntax?) (container (syntax->explorer-items x))]
@@ -208,7 +255,7 @@
         [(? box?) (container (unbox x))]
         [(? promise?) (container (force x))]
 	[(? explorable?) (add-item!* (->explorer-item x) parent)]
-	[_ (container '())])
+	[_ (container/nodelay '())])
       (void))
 
     (define/public (add-list-like!* xs parent)

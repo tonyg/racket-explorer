@@ -54,6 +54,12 @@
 			   (read-accept-lang #t))
 	      (read-syntax)))))
 
+  (send e add-item! (string->path "."))
+
+  (send e add-item! (explorer-item "testing exceptions"
+                                   (lambda () (+ 1 "hello"))
+                                   (void)))
+
   (struct x ()
 	  #:methods gen:explorable
 	  [(define (->explorer-item x)
