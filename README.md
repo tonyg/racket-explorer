@@ -14,7 +14,7 @@ intended as an alternative to `pretty-print` and friends.
     - pairs, vectors and lists
     - hash-tables and sets
     - object fields
-    - non-opaque structs
+    - non-opaque structs, struct-types
     - procedures
     - syntax objects
     - paths

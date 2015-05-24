@@ -205,6 +205,38 @@
       (list (explorer-item formatted '() formatted)
             (explorer-item "continuation-mark context" context context)))
 
+    (define/public (struct->explorer-items x)
+      (define-values (maybe-type skipped?) (struct-info x))
+      (define elts (vector->list (struct->vector x '#:opaque)))
+      (cons (struct-type->explorer-items maybe-type skipped?)
+            (cdr elts)))
+
+    (define/public (struct-type->explorer-items maybe-type skipped?)
+      (cond [(not maybe-type)
+             (if skipped? '#:opaque '#:none)]
+            [else (define-values (name
+                                  init-field-count
+                                  auto-field-count
+                                  accessor-proc
+                                  mutator-proc
+                                  immutable-k-list
+                                  super-type
+                                  super-skipped?)
+                    (struct-type-info maybe-type))
+                  (explorer-item (if skipped?
+                                     (format "type: subtype of ~a" name)
+                                     (format "type: ~a" name))
+                                 (hash-items->explorer-items
+                                  `((name . ,name)
+                                    (init-field-count . ,init-field-count)
+                                    (auto-field-count . ,auto-field-count)
+                                    (accessor-proc . ,accessor-proc)
+                                    (mutator-proc . ,mutator-proc)
+                                    (immutable-k-list . ,immutable-k-list)
+                                    (super-type . ,(struct-type->explorer-items super-type
+                                                                                super-skipped?))))
+                                 (list maybe-type skipped?))]))
+
     (define/public (item-label x)
       (if (syntax? x)
 	  (string-append "#<syntax " (item-label (syntax->datum x)) ">")
@@ -251,7 +283,7 @@
 	[(? vector?) (container (vector->list x))]
 	[(? object?) (container (hash-items->explorer-items (hash->list (object->hash x))))]
         [(? exn?) (container (exn->explorer-items x))]
-	[(? struct?) (container (vector->list (struct->vector x '#:opaque)))]
+	[(? struct?) (container (struct->explorer-items x))]
 	[(? procedure?) (container (procedure-explorer-items x))]
 	[(? syntax?) (container (syntax->explorer-items x))]
 	[(? path-for-some-system?) (container (path->explorer-items x))]

@@ -63,6 +63,24 @@
                                    (lambda () (+ 1 "hello"))
                                    (void)))
 
+  (struct test-struct-opaque (field1 field2))
+  (send e add-item! (test-struct-opaque 'a 'b))
+
+  (struct test-struct-transparent (field1 field2) #:transparent)
+  (send e add-item! (test-struct-transparent 'a 'b))
+
+  (struct test-struct-prefab (field1 field2) #:prefab)
+  (send e add-item! (test-struct-prefab 'a 'b))
+
+  (struct test-substruct-transparent test-struct-transparent (field3 field4) #:transparent)
+  (send e add-item! (test-substruct-transparent 'a 'b 'c 'd))
+
+  (struct test-opaque-transparent test-struct-opaque (field3 field4) #:transparent)
+  (send e add-item! (test-opaque-transparent 'a 'b 'c 'd))
+
+  (struct test-transparent-opaque test-struct-transparent (field3 field4))
+  (send e add-item! (test-transparent-opaque 'a 'b 'c 'd))
+
   (struct x ()
 	  #:methods gen:explorable
 	  [(define (->explorer-item x)
