@@ -45,7 +45,8 @@
 (define-generics explorable
   (->explorer-item explorable))
 
-(define (refresh-hierlist-item-label! hierlist-item ei)
+(define (refresh-hierlist-item-label! hierlist-item)
+  (define ei (send hierlist-item user-data))
   (define l (explorer-item-label ei))
   (define e (send hierlist-item get-editor))
   (send e erase)
@@ -54,13 +55,14 @@
 
 (define (fill-hierlist-item! hierlist-item ei)
   (send hierlist-item user-data ei)
-  (refresh-hierlist-item-label! hierlist-item ei))
+  (refresh-hierlist-item-label! hierlist-item))
 
 (define explorer-hierlist%
   (class hierarchical-list%
     (init-field explorer)
     (super-new)
     (define/override (on-item-opened i)
+      (refresh-hierlist-item-label! i)
       ;; (Re)compute children on-demand
       (define ei (send i user-data))
       (define kids (explorer-item-children ei))
@@ -71,13 +73,14 @@
                 kids)
             i))
     (define/override (on-item-closed i)
+      (refresh-hierlist-item-label! i)
       ;; Remove children - they'll be readded when next i is opened.
       (for [(item (send i get-items))] (send i delete-item item)))
     (define/override (on-select i)
       (cond
         [i
+         (refresh-hierlist-item-label! i)
          (define ei (send i user-data))
-         (refresh-hierlist-item-label! i ei)
          (send explorer select-value! #:define? #t (explorer-item-value ei))]
         [else
          (send explorer select-value! #:define? #f (void))]))))
