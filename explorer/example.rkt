@@ -1,5 +1,8 @@
 #lang racket/gui
 
+(require racket/runtime-path)
+(define-runtime-path here ".")
+
 (require "main.rkt")
 
 (module+ main
@@ -48,13 +51,13 @@
   ;; 	    (port->list))))
 
   (send e add-item!
-	(with-input-from-file "example.rkt"
+	(with-input-from-file (build-path here "example.rkt")
 	  (lambda ()
 	    (parameterize ((read-accept-reader #t)
 			   (read-accept-lang #t))
 	      (read-syntax)))))
 
-  (send e add-item! (string->path "."))
+  (send e add-item! here)
 
   (send e add-item! (explorer-item "testing exceptions"
                                    (lambda () (+ 1 "hello"))
