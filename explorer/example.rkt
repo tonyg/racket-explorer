@@ -57,6 +57,10 @@
 			   (read-accept-lang #t))
 	      (read-syntax)))))
 
+  ;; try a macro-expanded piece of syntax
+  (send e add-item!
+        (expand #'(let () (define x 1) (+ x 1))))
+
   (send e add-item! here)
 
   (send e add-item! (explorer-item "testing exceptions"

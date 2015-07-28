@@ -165,6 +165,10 @@
 					 (hash-items->explorer-items
 					  (map (lambda (k) (cons k (syntax-property stx k))) keys))
 					 stx))))
+              (let ((debug-info (syntax-debug-info stx)))
+                (list (explorer-item "- debug info"
+                                     (hash-items->explorer-items (hash->list debug-info))
+                                     stx)))
 	      (syntax-e stx)))
 
     (define/public (path->explorer-items p)
