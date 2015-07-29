@@ -27,6 +27,9 @@
 (require mrlib/hierlist)
 (require "workspace.rkt")
 
+(require "compile-cond.rkt")
+(require (for-syntax "compile-cond.rkt"))
+
 (provide (struct-out explorer-item)
 	 gen:explorable
 	 ->explorer-item
@@ -165,10 +168,13 @@
 					 (hash-items->explorer-items
 					  (map (lambda (k) (cons k (syntax-property stx k))) keys))
 					 stx))))
-              (let ((debug-info (syntax-debug-info stx)))
-                (list (explorer-item "- debug info"
-                                     (hash-items->explorer-items (hash->list debug-info))
-                                     stx)))
+              (compile/cond
+               [(module-provides? 'racket 'syntax-debug-info)
+                (let ((debug-info (syntax-debug-info stx)))
+                  (list (explorer-item "- debug info"
+                                       (hash-items->explorer-items (hash->list debug-info))
+                                       stx)))]
+               [else '()])
 	      (syntax-e stx)))
 
     (define/public (path->explorer-items p)
