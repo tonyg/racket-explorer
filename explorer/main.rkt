@@ -206,6 +206,27 @@
                 [else
                  (list (explorer-item "- file or directory does not exist" '() (void)))])))
 
+    (define/public (module-ish->explorer-item module-ish)
+      (explorer-item (format "- module ~a" module-ish)
+                     (lambda ()
+                       (local-require racket/rerequire)
+                       (when (module-path? module-ish)
+                         ;; It might be a module-path-index, you see
+                         (dynamic-rerequire module-ish #:verbosity 'none))
+                       (list (explorer-item "- language-info"
+                                            (lambda () (list (module->language-info module-ish)))
+                                            module-ish)
+                             (explorer-item "- imports"
+                                            (lambda () (module->imports module-ish))
+                                            module-ish)
+                             (explorer-item "- exports"
+                                            (lambda ()
+                                              (define-values (vars syntax) (module->exports module-ish))
+                                              (hash-items->explorer-items `((variables . ,vars)
+                                                                            (syntax . ,syntax))))
+                                            module-ish)))
+                     module-ish))
+
     (define/public (exn->explorer-items e)
       (define message (exn-message e))
       (define context (continuation-mark-set->context (exn-continuation-marks e)))
@@ -262,6 +283,11 @@
                                (send parent new-list))
                            ei))
 
+    (define/public (module-ish? x)
+      (or (module-path? x)
+          (resolved-module-path? x)
+          (module-path-index? x)))
+
     (define/public (add-item! x)
       (add-item!* x hierlist))
 
@@ -286,6 +312,11 @@
 			 (list "#b" "#o" "" "#x")
 			 (list 2 8 10 16)))]
 	[(? string?) (container (hash-items->explorer-items `((length . ,(string-length x)))))]
+	[(? symbol?) (container (hash-items->explorer-items
+                                 `((label . ,(symbol->string x))
+                                   ,@(if (module-ish? x)
+                                         `((module . ,(module-ish->explorer-item x)))
+                                         '()))))]
 	[(? bytes?) (container (hash-items->explorer-items `((bytes . ,(string-length x)))))]
 	[(? cons?) (container x)]
 	[(? hash?) (container (hash-items->explorer-items (hash->list x)))]
@@ -297,6 +328,7 @@
 	[(? procedure?) (container (procedure-explorer-items x))]
 	[(? syntax?) (container (syntax->explorer-items x))]
 	[(? path-for-some-system?) (container (path->explorer-items x))]
+        [(? module-ish?) (add-explorer-item! parent (module-ish->explorer-item x))]
         [(? box?) (container (unbox x))]
         [(? promise?) (container (force x))]
 	[(? explorable?) (add-item!* (->explorer-item x) parent)]

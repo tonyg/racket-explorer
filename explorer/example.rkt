@@ -21,7 +21,7 @@
                                   (+ 2 3))))
 
   (send e add-item!
-	(set "hello" 1 2 3.45 (lambda (x) x)))
+	(set 'racket/set "hello" 1 2 3.45 (lambda (x) x)))
 
   (send e add-item!
 	(lambda (x #:y y #:z [z 2]) y))
