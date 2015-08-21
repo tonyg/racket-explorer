@@ -209,11 +209,14 @@
     (define/public (module-ish->explorer-item module-ish)
       (explorer-item (format "- module ~a" module-ish)
                      (lambda ()
-                       (local-require racket/rerequire)
+                       (local-require racket/rerequire syntax/modresolve)
                        (when (module-path? module-ish)
                          ;; It might be a module-path-index, you see
                          (dynamic-rerequire module-ish #:verbosity 'none))
-                       (list (explorer-item "- language-info"
+                       (list (if (module-path? module-ish)
+                                 (resolve-module-path module-ish #f)
+                                 (resolve-module-path-index module-ish #f))
+                             (explorer-item "- language-info"
                                             (lambda () (list (module->language-info module-ish)))
                                             module-ish)
                              (explorer-item "- imports"
