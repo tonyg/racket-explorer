@@ -25,6 +25,7 @@
 (require racket/generic)
 (require racket/port)
 (require mrlib/hierlist)
+(require "frame.rkt")
 (require "workspace.rkt")
 
 (require "compile-cond.rkt")
@@ -356,7 +357,7 @@
     ))
 
 (define (explore v)
-  (define f (new frame%
+  (define f (new tool-frame%
 		 [label "Racket Explorer"]
 		 [width 300]
 		 [height 700]))
@@ -367,7 +368,7 @@
   e)
 
 (define (explore/refresh thunk)
-  (define f (new frame%
+  (define f (new tool-frame%
 		 [label "Racket Explorer"]
 		 [width 300]
 		 [height 700]))
